@@ -79,6 +79,7 @@
   async_status:
     jid: "{{ training_finished.ansible_job_id }}"
   register: job_result
+  when: node_type == "master"
   until: job_result.finished
   retries: 300
 
