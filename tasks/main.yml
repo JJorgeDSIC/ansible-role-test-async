@@ -93,7 +93,7 @@
   register: upload_model
   when: copy_locally is succeeded
 
-- name: 'Copy model locally'
+- name: 'Uploading model'
   s3:
     aws_access_key: '{{ access_key }}'
     aws_secret_key: '{{ secret_key }}'
