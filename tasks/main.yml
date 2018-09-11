@@ -85,4 +85,20 @@
 
 - name: 'Completed task'
   command: touch completed.txt
+  register: copy_locally
   when: job_result is succeeded
+
+- name: 'Copy model locally'
+  command: /opt/hadoop/bin/hadoop fs -get /cifar-10-model/ .
+  register: upload_model
+  when: copy_locally is succeeded
+
+- name: 'Copy model locally'
+  s3:
+    aws_access_key: '{{ access_key }}'
+    aws_secret_key: '{{ secret_key }}'
+    bucket: alucloud143
+    file_root: /cifar-10-model/
+    permission: public-read
+  when: upload_model is succeeded
+
