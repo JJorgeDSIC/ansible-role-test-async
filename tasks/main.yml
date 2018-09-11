@@ -1,0 +1,87 @@
+
+- name: Defining some env. variables (PSNODES)
+  lineinfile: dest=/etc/environment line=PSNODES={{ num_ps_nodes }} create=yes
+
+- name: Defining some env. variables (MNODES)
+  lineinfile: dest=/etc/environment line=MNODES={{ num_master_nodes }} create=yes
+
+- name: Defining some env. variables (WNODES)
+  lineinfile: dest=/etc/environment line=WNODES={{ num_worker_nodes }} create=yes
+
+- name: Pointing LD_LIBRARY_PATH paths to 9.0 (root user)
+  lineinfile: dest=/etc/environment line="LD_LIBRARY_PATH=/home/ubuntu/src/cntk/bindings/python/cntk/libs:/usr/local/cuda-9.0/lib64:/usr/local/lib:/usr/lib:/usr/local/cuda-9.0/extras/CUPTI/lib64:/usr/local/mpi/lib:" create=yes
+
+- name: Install Jupyter Notebook,Matplotlib and boto3
+  pip: 
+   name: "{{ item }}" 
+   executable: pip3 
+  with_items:
+    - jupyter
+    - matplotlib
+    - boto3
+
+- name: Cloning repository with TF code 
+  git: 
+    repo: 'https://github.com/JJorgeDSIC/DistributedTensorFlowCodeForIM.git'
+    dest: '{{ clone_path }}'
+    clone: yes
+
+####################################################
+#  --------- Configuration ----------------------  #
+####################################################
+- name: Install Tensorflow
+  pip:
+    name: tensorflow
+    executable: pip3 
+  when: not gpu
+
+####################################################
+#  --------- Configuration ----------------------  #
+####################################################
+- name: Install Tensorflow (GPU)
+  pip:
+    name: tensorflow-gpu
+    executable: pip3 
+  when: gpu
+
+- name: Launch tensorboard
+  command: ./launch_tensorboard.sh {{ model_path }}
+  when: launch_tensorboard
+  args:
+    chdir: '{{ clone_path }}/{{ work_dir }}'
+
+- name: Training (PS)
+  command: ./launch_training_dist_async.sh 0 {{ data_path }} {{ model_path }} {{ train_steps }} ps {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }}
+  when: node_type == "ps" and launch_training
+  async: 432000
+  poll: 0
+  args:
+    chdir: '{{ clone_path }}/{{ work_dir }}'
+
+- name: Training (MASTER)
+  command: ./launch_training_dist_async.sh 1 {{ data_path }} {{ model_path }} {{ train_steps }} master {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }}
+  when: node_type == "master" and launch_training
+  async: 432000
+  poll: 0 
+  register: training_finished
+  args:
+    chdir: '{{ clone_path }}/{{ work_dir }}'
+
+- name: Training (WORKER)
+  command: ./launch_training_dist_async.sh 1 {{ data_path }} {{ model_path }} {{ train_steps }} worker {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }}
+  when: node_type == "worker" and launch_training
+  async: 432000
+  poll: 0
+  args:
+    chdir: '{{ clone_path }}/{{ work_dir }}'
+
+- name: 'Check on async task'
+  async_status:
+    jid: "{{ training_finished.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 300
+
+- name: 'Completed task'
+  command: touch completed.txt
+  when: job_result is succeeded

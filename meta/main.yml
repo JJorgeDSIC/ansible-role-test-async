@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  author: "Javier Jorge Cano"
+  description: Ansible role to execute Distributed TensorFlow 
+  license: MIT
+  min_ansible_version: 1.4
+  version: 0.4
+  categories:
+    - scientific
+  platforms:
+  - name: Ubuntu
+dependencies: []

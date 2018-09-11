@@ -1,0 +1,14 @@
+node_type: worker
+num_ps_nodes: 1
+num_master_nodes: 1
+num_worker_nodes: 1
+tmp_data_path: /tmp/cifar-10-data/
+model_path: hdfs://default/cifar-10-model
+clone_path: /home/ubuntu/TF_models
+work_dir: resnet
+data_path: hdfs://default/cifar-10-data
+train_steps: 20000
+ps_nodes_list: "ps-0:2222"
+master_node: "master-1:2222"
+worker_nodes_list: "worker-2:2222,worker-3:2222"
+gpu: false
