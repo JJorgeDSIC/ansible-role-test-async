@@ -91,7 +91,7 @@
 - name: 'Copy model locally'
   command: /opt/hadoop/bin/hadoop fs -get /cifar-10-model/ /tmp/cifar-10-model
   register: upload_model
-  when: copy_locally is succeeded and node_type == "master
+  when: copy_locally is succeeded and node_type == "master"
 
 - name: 'Uploading model'
   s3:
