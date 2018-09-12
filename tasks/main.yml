@@ -86,7 +86,7 @@
 - name: 'Completed task'
   command: touch completed.txt
   register: copy_locally
-  when: job_result is succeeded and node_type == "master
+  when: job_result is succeeded and node_type == "master"
 
 - name: 'Copy model locally'
   command: /opt/hadoop/bin/hadoop fs -get /cifar-10-model/ /tmp/cifar-10-model
