@@ -99,7 +99,7 @@
     aws_secret_key: '{{ secret_key }}'
     bucket: alucloud143
     object: /test-cifar-10-model
-    src: /tmp/cifar-10-model
+    src: /tmp/cifar-10-model/config.txt
     mode: put
   when: upload_model is succeeded and node_type == "master"
 
