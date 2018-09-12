@@ -86,19 +86,20 @@
 - name: 'Completed task'
   command: touch completed.txt
   register: copy_locally
-  when: job_result is succeeded
+  when: job_result is succeeded and node_type == "master
 
 - name: 'Copy model locally'
-  command: /opt/hadoop/bin/hadoop fs -get /cifar-10-model/ .
+  command: /opt/hadoop/bin/hadoop fs -get /cifar-10-model/ /tmp/cifar-10-model
   register: upload_model
-  when: copy_locally is succeeded
+  when: copy_locally is succeeded and node_type == "master
 
 - name: 'Uploading model'
   s3:
     aws_access_key: '{{ access_key }}'
     aws_secret_key: '{{ secret_key }}'
     bucket: alucloud143
-    file_root: /cifar-10-model/
-    permission: public-read
-  when: upload_model is succeeded
+    object: /test-cifar-10-model
+    src: /tmp/cifar-10-model
+    mode: put
+  when: upload_model is succeeded and node_type == "master"
 
