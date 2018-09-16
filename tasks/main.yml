@@ -8,9 +8,6 @@
 - name: Defining some env. variables (WNODES)
   lineinfile: dest=/etc/environment line=WNODES={{ num_worker_nodes }} create=yes
 
-- name: Pointing LD_LIBRARY_PATH paths to 9.0 (root user)
-  lineinfile: dest=/etc/environment line="LD_LIBRARY_PATH=/home/ubuntu/src/cntk/bindings/python/cntk/libs:/usr/local/cuda-9.0/lib64:/usr/local/lib:/usr/lib:/usr/local/cuda-9.0/extras/CUPTI/lib64:/usr/local/mpi/lib:" create=yes
-
 - name: Install Jupyter Notebook,Matplotlib and boto3
   pip: 
    name: "{{ item }}" 
@@ -25,6 +22,8 @@
     repo: 'https://github.com/JJorgeDSIC/DistributedTensorFlowCodeForIM.git'
     dest: '{{ clone_path }}'
     clone: yes
+  become: yes
+  become_user: ubuntu  
 
 ####################################################
 #  --------- Configuration ----------------------  #
@@ -33,7 +32,7 @@
   pip:
     name: tensorflow
     executable: pip3 
-  when: not gpu
+  when: num_gpu == 0
 
 ####################################################
 #  --------- Configuration ----------------------  #
@@ -42,25 +41,31 @@
   pip:
     name: tensorflow-gpu
     executable: pip3 
-  when: gpu
+  when: num_gpu > 0
 
 - name: Launch tensorboard
   command: ./launch_tensorboard.sh {{ model_path }}
   when: launch_tensorboard
+  become: yes
+  become_user: ubuntu  
   args:
     chdir: '{{ clone_path }}/{{ work_dir }}'
 
 - name: Training (PS)
-  command: ./launch_training_dist_async.sh 0 {{ data_path }} {{ model_path }} {{ train_steps }} ps {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }}
+  command: ./launch_training_dist_async.sh {{ num_gpu }} {{ data_path }} {{ model_path }} {{ train_steps }} ps {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }}
   when: node_type == "ps" and launch_training
+  become: yes
+  become_user: ubuntu  
   async: 432000
   poll: 0
   args:
     chdir: '{{ clone_path }}/{{ work_dir }}'
 
 - name: Training (MASTER)
-  command: ./launch_training_dist_async.sh 1 {{ data_path }} {{ model_path }} {{ train_steps }} master {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }}
+  command: ./launch_training_dist_async.sh {{ num_gpu }} {{ data_path }} {{ model_path }} {{ train_steps }} master {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }}
   when: node_type == "master" and launch_training
+  become: yes
+  become_user: ubuntu  
   async: 432000
   poll: 0 
   register: training_finished
@@ -68,8 +73,10 @@
     chdir: '{{ clone_path }}/{{ work_dir }}'
 
 - name: Training (WORKER)
-  command: ./launch_training_dist_async.sh 1 {{ data_path }} {{ model_path }} {{ train_steps }} worker {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }}
+  command: ./launch_training_dist_async.sh {{ num_gpu }} {{ data_path }} {{ model_path }} {{ train_steps }} worker {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }}
   when: node_type == "worker" and launch_training
+  become: yes
+  become_user: ubuntu  
   async: 432000
   poll: 0
   args:
@@ -81,25 +88,29 @@
   register: job_result
   when: node_type == "master"
   until: job_result.finished
-  retries: 300
-
-- name: 'Completed task'
-  command: touch completed.txt
-  register: copy_locally
-  when: job_result is succeeded and node_type == "master"
+  retries: 1000
 
 - name: 'Copy model locally'
   command: /opt/hadoop/bin/hadoop fs -get /cifar-10-model/ /tmp/cifar-10-model
+  become: yes
+  become_user: ubuntu  
   register: upload_model
-  when: copy_locally is succeeded and node_type == "master"
+  when: job_result is succeeded and node_type == "master"
 
 - name: 'Uploading model'
   s3:
     aws_access_key: '{{ access_key }}'
     aws_secret_key: '{{ secret_key }}'
     bucket: alucloud143
-    object: /test-cifar-10-model
-    src: /tmp/cifar-10-model/config.txt
+    object: /cifar-10-model-cpu-gpu
+    src: /tmp/cifar-10-model/checkpoint
     mode: put
   when: upload_model is succeeded and node_type == "master"
 
+- name: basic upload
+  s3_sync:
+    aws_access_key: '{{ access_key }}'
+    aws_secret_key: '{{ secret_key }}'
+    bucket: alucloud143
+    file_root: /tmp/cifar-10-model/
+  when: upload_model is succeeded and node_type == "master"

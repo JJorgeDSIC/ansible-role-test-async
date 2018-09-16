@@ -11,4 +11,4 @@ train_steps: 20000
 ps_nodes_list: "ps-0:2222"
 master_node: "master-1:2222"
 worker_nodes_list: "worker-2:2222,worker-3:2222"
-gpu: false
+num_gpu: 0
