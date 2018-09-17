@@ -1,12 +1,12 @@
 
-- name: Defining some env. variables (PSNODES)
-  lineinfile: dest=/etc/environment line=PSNODES={{ num_ps_nodes }} create=yes
+# - name: Defining some env. variables (PSNODES)
+#   lineinfile: dest=/etc/environment line=PSNODES={{ num_ps_nodes }} create=yes
 
-- name: Defining some env. variables (MNODES)
-  lineinfile: dest=/etc/environment line=MNODES={{ num_master_nodes }} create=yes
+# - name: Defining some env. variables (MNODES)
+#   lineinfile: dest=/etc/environment line=MNODES={{ num_master_nodes }} create=yes
 
-- name: Defining some env. variables (WNODES)
-  lineinfile: dest=/etc/environment line=WNODES={{ num_worker_nodes }} create=yes
+# - name: Defining some env. variables (WNODES)
+#   lineinfile: dest=/etc/environment line=WNODES={{ num_worker_nodes }} create=yes
 
 - name: Install Jupyter Notebook,Matplotlib and boto3
   pip: 
@@ -53,7 +53,7 @@
     chdir: '{{ clone_path }}/{{ work_dir }}'
 
 - name: Training (PS)
-  command: ./launch_training_dist_async.sh {{ num_gpu }} {{ data_path }} {{ model_path }} {{ train_steps }} ps {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }} {{ num_ps_nodes }} {{ num_worker_nodes }}
+  command: ./launch_training_dist_async.sh {{ num_gpu }} {{ data_path }} {{ model_path }} {{ train_steps }} ps {{ ps_nodes_list }} {{ worker_nodes_list }}
   when: node_type == "ps" and launch_training
   become: yes
   become_user: ubuntu  
@@ -63,7 +63,7 @@
     chdir: '{{ clone_path }}/{{ work_dir }}'
 
 - name: Training (MASTER)
-  command: ./launch_training_dist_async.sh {{ num_gpu }} {{ data_path }} {{ model_path }} {{ train_steps }} master {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }} {{ num_ps_nodes }} {{ num_worker_nodes }}
+  command: ./launch_training_dist_async.sh {{ num_gpu }} {{ data_path }} {{ model_path }} {{ train_steps }} worker {{ ps_nodes_list }} {{ worker_nodes_list }}
   when: node_type == "master" and launch_training
   become: yes
   become_user: ubuntu  
@@ -74,7 +74,7 @@
     chdir: '{{ clone_path }}/{{ work_dir }}'
 
 - name: Training (WORKER)
-  command: ./launch_training_dist_async.sh {{ num_gpu }} {{ data_path }} {{ model_path }} {{ train_steps }} worker {{ ps_nodes_list }} {{ master_node }} {{ worker_nodes_list }} {{ num_ps_nodes }} {{ num_worker_nodes }}
+  command: ./launch_training_dist_async.sh {{ num_gpu }} {{ data_path }} {{ model_path }} {{ train_steps }} worker {{ ps_nodes_list }} {{ worker_nodes_list }}
   when: node_type == "worker" and launch_training
   become: yes
   become_user: ubuntu  
