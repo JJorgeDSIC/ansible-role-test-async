@@ -101,7 +101,7 @@
   when: job_result is succeeded and node_type == "master"
 
 - name: 'Uploading model'
-  s3:
+  aws_s3:
     aws_access_key: '{{ access_key }}'
     aws_secret_key: '{{ secret_key }}'
     bucket: alucloud143
@@ -110,10 +110,10 @@
     mode: put
   when: upload_model is succeeded and node_type == "master"
 
-- name: basic upload
-  s3_sync:
-    aws_access_key: '{{ access_key }}'
-    aws_secret_key: '{{ secret_key }}'
-    bucket: alucloud143
-    file_root: /tmp/cifar-10-model/
-  when: upload_model is succeeded and node_type == "master"
+# - name: basic upload
+#   s3_sync:
+#     aws_access_key: '{{ access_key }}'
+#     aws_secret_key: '{{ secret_key }}'
+#     bucket: alucloud143
+#     file_root: /tmp/cifar-10-model/
+#   when: upload_model is succeeded and node_type == "master"
