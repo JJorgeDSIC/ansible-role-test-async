@@ -1,7 +1,7 @@
 node_type: worker
 num_ps_nodes: 1
 num_master_nodes: 1
-num_worker_nodes: 1
+num_worker_nodes: 0
 tmp_data_path: /tmp/cifar-10-data/
 model_path: hdfs://default/cifar-10-model
 clone_path: /home/ubuntu/TF_models
