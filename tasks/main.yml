@@ -17,31 +17,32 @@
     - matplotlib
     - boto3
 
-- name: Cloning repository with TF code 
-  git: 
-    repo: 'https://github.com/JJorgeDSIC/DistributedTensorFlowCodeForIM.git'
-    dest: '{{ clone_path }}'
-    clone: yes
-  become: yes
-  become_user: ubuntu  
+#  Already done...
+# - name: Cloning repository with TF code 
+#   git: 
+#     repo: 'https://github.com/JJorgeDSIC/DistributedTensorFlowCodeForIM.git'
+#     dest: '{{ clone_path }}'
+#     clone: yes
+#   become: yes
+#   become_user: ubuntu  
 
-####################################################
-#  --------- Configuration ----------------------  #
-####################################################
-- name: Install Tensorflow
-  pip:
-    name: tensorflow
-    executable: pip3 
-  when: num_gpu == 0
+# ####################################################
+# #  --------- Configuration ----------------------  #
+# ####################################################
+# - name: Install Tensorflow
+#   pip:
+#     name: tensorflow
+#     executable: pip3 
+#   when: num_gpu == 0
 
-####################################################
-#  --------- Configuration ----------------------  #
-####################################################
-- name: Install Tensorflow (GPU)
-  pip:
-    name: tensorflow-gpu
-    executable: pip3 
-  when: num_gpu > 0
+# ####################################################
+# #  --------- Configuration ----------------------  #
+# ####################################################
+# - name: Install Tensorflow (GPU)
+#   pip:
+#     name: tensorflow-gpu
+#     executable: pip3 
+#   when: num_gpu > 0
 
 - name: Launch tensorboard
   command: ./launch_tensorboard.sh {{ model_path }}
