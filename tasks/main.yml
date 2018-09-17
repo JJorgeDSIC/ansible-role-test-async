@@ -87,6 +87,8 @@
     jid: "{{ training_finished.ansible_job_id }}"
   register: job_result
   when: node_type == "master"
+  become: yes
+  become_user: ubuntu 
   until: job_result.finished
   retries: 1000
 
