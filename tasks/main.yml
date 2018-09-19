@@ -105,7 +105,7 @@
 
 - name: 'Uploading model'
   command: python3 s3uploading.py
-  when:  upload_model is succeeded and node_type == "worker"
+  when:  upload_model is succeeded and node_type == "master"
   become: yes
   become_user: ubuntu  
   args:
