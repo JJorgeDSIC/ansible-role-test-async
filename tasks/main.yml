@@ -17,6 +17,9 @@
     - matplotlib
     - boto3
 
+- name: Copying Uploading Script
+  template: src=s3uploading.py.j2 dest=/tmp/s3uploading.py
+
 #  Already done...
 # - name: Cloning repository with TF code 
 #   git: 
@@ -101,14 +104,23 @@
   when: job_result is succeeded and node_type == "master"
 
 - name: 'Uploading model'
-  aws_s3:
-    aws_access_key: '{{ access_key }}'
-    aws_secret_key: '{{ secret_key }}'
-    bucket: alucloud143
-    object: /cifar-10-model-cpu-gpu
-    src: /tmp/cifar-10-model/checkpoint
-    mode: put
-  when: upload_model is succeeded and node_type == "master"
+  command: python3 s3uploading.py
+  when:  upload_model is succeeded and node_type == "worker"
+  become: yes
+  become_user: ubuntu  
+  args:
+    chdir: '/tmp/'
+
+
+# - name: 'Uploading model'
+#   aws_s3:
+#     aws_access_key: '{{ access_key }}'
+#     aws_secret_key: '{{ secret_key }}'
+#     bucket: alucloud143
+#     object: /cifar-10-model-cpu-gpu
+#     src: /tmp/cifar-10-model/checkpoint
+#     mode: put
+#   when: upload_model is succeeded and node_type == "master"
 
 # - name: basic upload
 #   s3_sync:
