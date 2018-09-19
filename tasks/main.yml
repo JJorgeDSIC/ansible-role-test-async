@@ -94,7 +94,7 @@
   become: yes
   become_user: ubuntu 
   until: job_result.finished
-  retries: 1000
+  retries: 100000
 
 - name: 'Copy model locally'
   command: /opt/hadoop/bin/hadoop fs -get /cifar-10-model/ /tmp/cifar-10-model
